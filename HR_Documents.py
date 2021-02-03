@@ -365,7 +365,7 @@ def site_in_department(gde_2, file):
     list_from_csv = []
     # read file and find: 
     # 1. By user department number input
-    # 2. Append all data in csv to list
+    # 2. Append all data from small csv file to list
     with open(f"{file}.csv", newline='') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=';', quotechar='|')
         if gde_2 != "0":
