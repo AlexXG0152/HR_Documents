@@ -338,25 +338,13 @@ def vacation_finance_help(date_start):
 
 @exception_handler
 def replace_wrong_cex_names(gde):
-    """
-    Because server sometimes (for long department names) not showing right names
-    app replacing answer to right and full department names
-    """
-    if gde.startswith('Цех эксплуатации и обслуживания'):
-        gde = 'Цех эксплуатации и обслуживания автомобилей'
-    elif gde.startswith('Управление производством'):
-        gde = 'Управление производством автомобилей'
-    elif gde.startswith('Отдел текущей эксплуатации'):
-        gde = 'Отдел текущей эксплуатации транспорта'
-    elif gde.startswith('Управление автоматизации'):
-        gde = 'Управление автоматизации и автомобильных технологий'
-    elif gde.startswith('Цех контрольно-измерительных'):
-        gde = 'Цех контрольно-измерительных приборов и автоматики'
-    elif gde.startswith('Цех отопления'):
-        gde = 'Цех отопления и вентиляции'
-    elif gde.startswith('Цех перемотки'):
-        gde = 'Цех перемотки, упаковки и отправки'
-    return gde
+    nd = ""
+    with open(f"departments.csv", newline='') as csvfile:
+        spamreader = csv.reader(csvfile, delimiter=';', quotechar='|')
+        for row in spamreader:
+            if ', '.join(row).startswith(gde):
+                gde = str(*row)
+                return gde
 
 
 @exception_handler
