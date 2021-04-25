@@ -69,7 +69,7 @@ def send_request_to_db(payload):
     """
     print('Нужно подожадать пару секунд...')
     try:
-        r = requests.post('http://1.1.1.1/hrbase/hrbase.fwx', data=payload)
+        r = requests.post('http://1.1.1.1/find.fwx', data=payload)
         r.encoding = 'windows-1251'
 
         soup = BeautifulSoup(r.text, 'lxml')
@@ -108,7 +108,7 @@ def parsing_server_answer(arg, payload):
     Answer come to me in constant structure HTML page.
     Because of this i'm must clean server answer.
     """
-    titles, soup = send_request_to_db(payload)  # titles - depatrment, soup - all_data
+    titles, soup = send_request_to_db(payload)  # titles - work place, soup - all
 
     # department name for case without workers data (vacancy)
     cex = str(titles).split('] ', 1)[1].split(', ', 1)[0].replace("'", "")
@@ -118,8 +118,8 @@ def parsing_server_answer(arg, payload):
         # working with 3rd table on server answer HTML page
         for tr in soup.find_all('table')[3].find_all('tr')[1:]:
             """
-            here func find and compare ID worker with answer data,
-            because if user ask ID '132' server will show all users
+            here func find and compare ID worker with answer data, 
+            because if user ask ID '132' server will show all users 
             contain '132' in ID number (1322, 7132, etc...)
             """
             if int(tr.text[0:6]) == int(payload['StrFIO']):
@@ -184,7 +184,6 @@ def create_list_of_holidays(date_start, modified_end_date):
     # loop for add to list of holidays between start and end dates
     for i in hdays_strong:
         if year_end != year_start:
-            # prazd.extend((i + year_start, i + year_end))
             prazd.append(i + year_start)
             prazd.append(i + year_end)
         else:
@@ -227,20 +226,27 @@ def check_holidays(date_start, modified_end_date, holidays):
 @exception_handler
 def date_input(times):
     """
-    Input date (or two if user know end date) without checking inputed data.
-    I'm not checking data here because im dont need any checks.
-    User can input anything what  he want and replace this in given blank.
+    Input date (or two if user know end date) with checking inputed data.
     """
-    date_start = str(input('Дата начала (ОБРАЗЕЦ - "01.02.2021"): '))
+    date_start = str(input('Дата начала (ОБРАЗЕЦ - "07.12.2020"): '))
     print(date_start)
     if times == 1:
         date_end = 0
     else:
         print('Если на один день, просто нажмите Enter.')
-        date_end = str(input('Дата окончания (ОБРАЗЕЦ - "17.02.2021"): '))
+        date_end = str(input('Дата окончания (ОБРАЗЕЦ - "17.12.2020"): '))
     print(date_end)
 
     return date_start, date_end
+
+
+@exception_handler
+def count_k_days(date_start, date_end):
+    if date_end == "":
+        return "1"
+    d1 = datetime.strptime(date_start, "%d.%m.%Y")
+    d2 = datetime.strptime(date_end, "%d.%m.%Y")
+    return (abs((d2 - d1).days)+1)
 
 
 @exception_handler
@@ -249,7 +255,7 @@ def input_date_for_vacation(arg):
     while True:
         # input and check user input format data.
         date = datetime.strptime(
-            input(f'Введите дату {arg} (ОБРАЗЕЦ - "01.02.2021"): '), '%d.%m.%Y'
+            input(f'Введите дату {arg} (ОБРАЗЕЦ - "24.12.2020"): '), '%d.%m.%Y'
             ).strftime('%d.%m.%Y')
         # check if day start not in holidays list
         holidays_list = create_list_of_holidays(date, date)
@@ -266,7 +272,7 @@ def count_dates_for_vacation():
     message = '''
 Дата окончания (нажмите цифру 1)
 Количество дней (нажмите цифру 2)
-Заполнят в отделе персонала (нажмите цифру 3)
+Заполнят в отделе кадров (нажмите цифру 3)
 Ваш выбор: '''
 
     date_or_days = str(input(message))
@@ -290,7 +296,7 @@ def count_dates_for_vacation():
         # change format of end date
         modified_end_date = end_date_kd.strftime('%d.%m.%Y')
         # information message for first data (before check holidays list)
-        # print(f'INFO - modified_end_date = {modified_end_date}')
+        print(f'INFO - modified_end_date = {modified_end_date}')
         # create list of holidays between two dates (start and modified)
         holidays = create_list_of_holidays(date_start, modified_end_date)
         # check end date if dates in holidays
@@ -309,7 +315,6 @@ def count_dates_for_vacation():
 def format_date_for_template(date_start, date_end):
     """
     Formating dates with rules of Russian language for filling Word template
-    Case for one date and for two date
     """
     if date_end != '':
         date_start = f'c {date_start}'
@@ -323,8 +328,8 @@ def format_date_for_template(date_start, date_end):
 @exception_handler
 def vacation_finance_help(date_start):
     """
-    Finance help for vacation. Paid one time in year.
-    Fill in right place in vacation Word blank.
+    Finance help for vacation
+    one time in year for fill in right place in vacation blank
     """
     year = date_start[-4:]  # because finance help paid only once in year on start date
     finance_help = str(input('Материальная помощь? Да/Нет '))
@@ -349,11 +354,9 @@ def replace_wrong_cex_names(gde):
 
 @exception_handler
 def site_in_department(gde_2, file):
-    """ Read CSV files with data needed for fill templates. """
+    """ Read CSV file with parts in departments for every department """
     list_from_csv = []
-    # read file and find: 
-    # 1. By user department number input
-    # 2. Append all data from small csv file to list
+    # read file and find by user department number input
     with open(f"{file}.csv", newline='') as csvfile:
         spamreader = csv.reader(csvfile, delimiter=';', quotechar='|')
         if gde_2 != "0":
@@ -365,7 +368,7 @@ def site_in_department(gde_2, file):
             for row in spamreader:
                 list_from_csv.append(row)
                 
-    # create enumerating loop for choise number in list and easy user choise and add to Word template
+    # create enumerating loop for choise number of site in department in list and add to Word template
     for k, v in enumerate((list_from_csv)[1:], 1):
         if file == 'employer':
             print(f"{k} = {', '.join(v[0:3])}")
@@ -373,6 +376,7 @@ def site_in_department(gde_2, file):
             print(f"{k} = {', '.join(v[1:3])}")
 
     # return right part by number
+
     if file == 'type_mol':
         liability = []
         select = True
@@ -387,7 +391,7 @@ def site_in_department(gde_2, file):
             elif select not in range(1, 13):
                 print('Проверьте введенные данные!')
             liability.append(list_from_csv[select][1])
-        return ('. '.join(map(str, liability)))  #unpack list for easier fill word template
+        return ('. '.join(map(str, liability)))  #unpack list for easyer fill word template
     
     else:
         select = int(input('\nУкажите необходимый номер по порядку: '))
@@ -397,7 +401,7 @@ def site_in_department(gde_2, file):
 
 @exception_handler
 def initials(fio):
-    """ Get short version of Name / Father Name for some type of document (#2) """
+    """ Get short version of Name / Father Name for some type of doc (#2) """
     fio_initials = fio.split()
 
     if len(fio_initials) >= 3:
@@ -508,14 +512,14 @@ def data_for_liability_contract():  # MOLs
     type_mol = site_in_department("0", "type_mol")
     employer = site_in_department("0", "employer")
 
-    return employer, type_mol
+    return *employer, type_mol
 
 
 @exception_handler
 def fill_and_show_ready_template(
         choise, fio, gde, kem, tab, date_start, date_end, days,
         modified_end_date, finance_help, gde_2, kem_2, tab_2, fio_2, razr):
-    """ Filling choisen template and open ready Word doc """
+    """ Filling all another template of docs """
     # template file and start year
     template_1 = resource_path(f'{choise}.docx')
     # fill document
@@ -588,10 +592,13 @@ def main():
                 return 0
             gde = replace_wrong_cex_names(gde)
             date_start, date_end = date_input(2)
-            date_start, date_end = format_date_for_template(date_start, date_end)
+            
             fio = initials(fio)  # just create short variant of FIO
             gde_2 = kem_2 = tab_2 = fio_2 = razr = ''
-            days = modified_end_date = finance_help = ''
+            days = count_k_days(date_start, date_end) ##
+            print(days) ##
+            date_start, date_end = format_date_for_template(date_start, date_end)
+            modified_end_date = finance_help = ''
             arguments = [choise, fio, gde, kem, tab, date_start, date_end,
                          days, modified_end_date, finance_help, gde_2,
                          kem_2, tab_2, fio_2, razr]
@@ -709,20 +716,18 @@ def main():
                 return 0
             gde = replace_wrong_cex_names(gde)
             gde, _, _ = sklonenie(gde, kem, fio, 'accs')
-            razr, finance_help, tab_2,  = site_in_department("0", "employer")  # mols (data for a liability contract)
-            kem_2 = site_in_department("0", "type_mol")
-            if razr == 'Иванов И.И.':
-                finance_help = 'заместитель генерального директора ОАО «Рога и копыта»'
+            razr, finance_help, tab_2, kem_2 = data_for_liability_contract()
+            if razr == 'Иванов В.И.':
+                finance_help = 'директор  «А А» ОАО «Е Т»'
             mesto_raboty = 0
             try:
-                # mesto_raboty = 0
                 while mesto_raboty not in ['1', '2']:
                     mesto_raboty = str(input('По своей работе (нажмите 1) или вместо кого-то (нажмите 2): '))
-                    if mesto_raboty == '1': 
+                    if mesto_raboty == '1':
                         date_start, date_end = gde, kem
                     elif mesto_raboty == '2':
                         arg, payload = create_request_to_database(arg=2)
-                        date_start, date_end = parsing_server_answer(arg, payload) 
+                        date_start, date_end = parsing_server_answer(arg, payload)
                         date_start = replace_wrong_cex_names(date_start)
                         date_start, date_end, _ = sklonenie(date_start, date_end, fio, 'accs')
                         date_end = f'и.о. {date_end}'
